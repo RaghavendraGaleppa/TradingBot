@@ -194,9 +194,13 @@ class TradeBroker:
 
 class TradingEnv(gym.Env):
 	
-	def __init__(self, trading_broker):
+	def __init__(self, trading_broker, observation_shape="1d"):
 		self.trading_broker = trading_broker
 		self.action_space = gym.spaces.Discrete(len(Actions))
+		if observation_shape == "1d":
+			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 1), dtype=float)
+		elif observation_shape == "2d":
+			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 4), dtype=float)
 		self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 2), dtype=float)
 		self.done = False
 		self.last_P_L = 0
@@ -232,7 +236,9 @@ class TradingEnv(gym.Env):
 		price_data = self.trading_broker.get_price_history()
 		if len(price_data) == 0:
 			return np.zeros(self.observation_space.shape)
-		return price_data[['close', 'rate_of_change']].to_numpy()
+		obs = price_data[['open', 'high', 'low', 'close']].to_numpy()
+		obs = obs / obs.max()
+		return obs
 		
 	
 	def _calculate_reward(self):
