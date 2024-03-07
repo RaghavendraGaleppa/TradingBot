@@ -8,6 +8,9 @@ import pandas as pd
 
 logger = get_logger(__name__)
 
+### Use below code to turn off the logging
+# logger.setLevel("CRITICAL")
+
 
 class Actions(Enum):
 	Buy = 0
@@ -67,12 +70,22 @@ class TradeBroker:
 		self.trade_history = []
 		self.shares_held = 0
 		
+		# Some meta information
+		self.balance_history = []
+		self.total_buys = 0
+		self.total_sells = 0
+		self.total_holds = 0
+		
+		
 	def reset(self):
 		self.data_source.reset()
 		self.balance = self.initial_balance
 		self.price_history.clear() # This will empty the deque
 		self.trade_history.clear() # This will empty the list
 		self.shares_held = 0
+		self.balance_history.clear()
+		self.total_buys = 0
+		self.total_sells = 0
 		
 	def is_done(self):
 		if self.balance <= 0 and self.shares_held == 0:
@@ -101,6 +114,8 @@ class TradeBroker:
 		self.balance -= price["close"]
 		self.shares_held += 1
 		self.trade_history.append({"action": "buy", "price": price["close"], "idx": idx})
+		self.total_buys += 1
+		self.balance_history.append(self.balance)
 		logger.debug(f"Buying 1 share at {price['close']}")
 		return True
 	
@@ -122,6 +137,8 @@ class TradeBroker:
 		self.balance += price["close"]
 		self.shares_held -= 1
 		self.trade_history.append({"action": "sell", "price": price["close"], "idx": idx})
+		self.total_sells += 1
+		self.balance_history.append(self.balance)
 		logger.debug(f"Selling 1 share at {price['close']}")
 		return True
 	
@@ -136,6 +153,8 @@ class TradeBroker:
 			logger.debug("No more data to hold")
 			return False
 		logger.debug(f"Holding at {price['close']}")
+		self.total_holds += 1
+		self.balance_history.append(self.balance)
 		return True
 	
 	def get_price_history(self):
@@ -150,6 +169,17 @@ class TradeBroker:
 		price_data.dropna(inplace=True)
 		price_data['rate_of_change'] = (price_data['close'] - price_data['close_prev']) / price_data['close_prev']
 		return price_data
+	
+	def _get_meta_info(self):
+		"""
+		- This method will return the meta information
+		:return: dict
+		"""
+		return {
+			"total_buys": self.total_buys,
+			"total_sells": self.total_sells,
+			"total_holds": self.total_holds
+		}
 	
 	def get_current_assets(self):
 		return {

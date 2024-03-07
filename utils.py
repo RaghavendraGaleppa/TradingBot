@@ -3,6 +3,7 @@ import pandas as pd
 import mplfinance as mf
 import logging
 
+
 def get_logger(name, level="DEBUG"):
     logger = logging.getLogger(name)
     _format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
