@@ -48,7 +48,7 @@ class DataSource:
 			return None
 		price = self.data.iloc[self.current_index]
 		self.current_index += 1
-		return price, self.current_index
+		return price.to_dict(), self.current_index
 	
 	def get_idx_price(self, idx):
 		return self.data.iloc[idx]
@@ -63,7 +63,7 @@ class DataSource:
 	
 class TradeBroker:
 	
-	def __init__(self, data_source: DataSource, initial_balance=1000, price_history_length=100):
+	def __init__(self, data_source: DataSource, initial_balance=1000, price_history_length=100, max_shares_held=10):
 		self.data_source = data_source
 		self.data_source.reset()
 		
@@ -72,6 +72,7 @@ class TradeBroker:
 		self.price_history = deque(maxlen=price_history_length)
 		self.trade_history = []
 		self.shares_held = 0
+		self.max_shares_held = max_shares_held
 		
 		# Some meta information
 		self.balance_history = []
@@ -101,21 +102,35 @@ class TradeBroker:
 		:return: None
 		"""
 		price, idx = self.data_source.get_next_price()
-		self.price_history.append(price)
+		price['shares_held'] = self.shares_held
+		"""
+		- Here its important to make sure that shares_held is added to the price data before appending it to the price_history.
+		- It changes based on whether we are buying or selling.
+		"""
 		if price is None:
 			logger.debug("No more data to buy")
+			self.price_history.append(price) 
 			return False
 		
 		if self.balance <= 0 and self.shares_held == 0:
 			logger.debug("No balance to buy")
+			self.price_history.append(price)
 			return False
 		
 		if self.balance < price["close"]:
 			logger.debug(f"Not enough balance to buy at price: {price['close']}")
+			self.price_history.append(price)
+			return False
+		
+		if self.shares_held == self.max_shares_held:
+			logger.debug(f"Max shares held reached. Cannot buy more")
+			self.price_history.append(price)
 			return False
 		
 		self.balance -= price["close"]
 		self.shares_held += 1
+		price['shares_held'] = self.shares_held
+		self.price_history.append(price)
 		self.trade_history.append({"action": "buy", "price": price["close"], "idx": idx})
 		self.total_buys += 1
 		self.balance_history.append(self.balance)
@@ -128,17 +143,21 @@ class TradeBroker:
 		:return: None
 		"""
 		price, idx = self.data_source.get_next_price()
-		self.price_history.append(price)
+		price['shares_held'] = self.shares_held
 		if price is None:
 			logger.debug("No more data to sell")
+			self.price_history.append(price)
 			return False
 		
 		if self.shares_held == 0:
 			logger.debug("No shares to sell")
+			self.price_history.append(price)
 			return False
 		
 		self.balance += price["close"]
 		self.shares_held -= 1
+		price['shares_held'] = self.shares_held
+		self.price_history.append(price)
 		self.trade_history.append({"action": "sell", "price": price["close"], "idx": idx})
 		self.total_sells += 1
 		self.balance_history.append(self.balance)
@@ -151,6 +170,7 @@ class TradeBroker:
 		:return: None
 		"""
 		price, idx = self.data_source.get_next_price()
+		price['shares_held'] = self.shares_held
 		self.price_history.append(price)
 		if price is None:
 			logger.debug("No more data to hold")
@@ -171,6 +191,7 @@ class TradeBroker:
 		price_data['close_prev'] = price_data['close'].shift(1)
 		price_data.dropna(inplace=True)
 		price_data['rate_of_change'] = (price_data['close'] - price_data['close_prev']) / price_data['close_prev']
+		price_data['shares_held'] = price_data['shares_held'] / self.max_shares_held
 		return price_data
 	
 	def _get_meta_info(self):
@@ -203,7 +224,7 @@ class TradingEnv(gym.Env):
 		if observation_shape == "1d":
 			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 1), dtype=float)
 		elif observation_shape == "2d":
-			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 4), dtype=float)
+			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 5), dtype=float)
 		self.done = False
 		self.last_P_L = 0
 		
@@ -238,7 +259,7 @@ class TradingEnv(gym.Env):
 		price_data = self.trading_broker.get_price_history()
 		if len(price_data) == 0:
 			return np.zeros(self.observation_space.shape)
-		obs = price_data[['open', 'high', 'low', 'close']].to_numpy()
+		obs = price_data[['open', 'high', 'low', 'close', 'shares_held']].to_numpy()
 		obs = obs / obs.max()
 		return obs
 		
