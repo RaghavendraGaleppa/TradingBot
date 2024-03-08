@@ -197,9 +197,9 @@ class TradeBroker:
 		price_data = pd.DataFrame(self.price_history)
 		if len(price_data) == 0:
 			return price_data
-		price_data['close_prev'] = price_data['close'].shift(1)
-		price_data.dropna(inplace=True)
-		price_data['rate_of_change'] = (price_data['close'] - price_data['close_prev']) / price_data['close_prev']
+		# price_data['close_prev'] = price_data['close'].shift(1)
+		# price_data.dropna(inplace=True)
+		# price_data['rate_of_change'] = (price_data['close'] - price_data['close_prev']) / price_data['close_prev']
 		price_data['shares_held'] = price_data['shares_held'] / self.max_shares_held
 		return price_data
 	

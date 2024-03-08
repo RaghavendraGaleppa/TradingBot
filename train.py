@@ -45,6 +45,12 @@ class Trainer:
 		eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * \
 		                (1 - min(1.0, self.steps_done / self.eps_decay))
 		self.steps_done += 1
+		state = torch.tensor(state, dtype=torch.float32)
+		if len(state.shape) == 2:
+			state = state.unsqueeze(0)
+		if len(state.shape) == 3:
+			state = state.unsqueeze(0)
+			
 		if sample.item() > eps_threshold:
 			with torch.no_grad():
 				"""
@@ -70,11 +76,9 @@ class Trainer:
 		
 		# Convert the numpy arrays to torch tensors
 		states = torch.tensor(states, dtype=torch.float32)
-		states = states.unsqueeze(0)
-		states = states.permute(0, 3, 1, 2)
+		states = states.unsqueeze(1)
 		next_states = torch.tensor(next_states, dtype=torch.float32)
-		next_states = next_states.unsqueeze(0)
-		next_states = next_states.permute(0, 3, 1, 2)
+		next_states = next_states.unsqueeze(1)
 
 		actions = torch.tensor(actions, dtype=torch.long)
 		rewards = torch.tensor(rewards, dtype=torch.float32)
