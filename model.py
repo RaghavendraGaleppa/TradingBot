@@ -2,9 +2,32 @@ import numpy as np
 from numpy.random import Generator, PCG64
 from collections import deque
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 # Set the seed for the random number generator
 np.random.seed(0)
+torch.manual_seed(0)
+
+
+class QNetworkCNN(nn.Module):
+	
+	def __init__(self, input_shape, n_actions):
+		super(QNetworkCNN, self).__init__()
+		self.conv1 = nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=3, padding=1)
+		self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+		self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1)
+		self.fc1 = nn.Linear(64*input_shape[1]*input_shape[2], 512)
+		self.fc2 = nn.Linear(512, n_actions)
+	
+	def forward(self, x):
+		x = F.relu(self.conv1(x))
+		x = F.relu(self.conv2(x))
+		x = F.relu(self.conv3(x))
+		x = x.view(x.size(0), -1)
+		x = F.relu(self.fc1(x))
+		return self.fc2(x)
+	
 
 class ReplayBuffer:
 	
