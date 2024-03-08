@@ -5,8 +5,10 @@ from utils import get_data, get_logger
 import gymnasium as gym
 import numpy as np
 import pandas as pd
+from numpy.random import Generator, PCG64
 
 logger = get_logger(__name__)
+np.random.seed(0)
 
 ### Use below code to turn off the logging
 # logger.setLevel("CRITICAL")
@@ -80,9 +82,16 @@ class TradeBroker:
 		self.total_sells = 0
 		self.total_holds = 0
 		
+		self.generator = Generator(PCG64(0))
 		
-	def reset(self):
-		self.data_source.reset()
+		
+	def reset(self, random_start_index=False):
+		if random_start_index:
+			start_index = self.generator.randint(0, len(self.data_source) - 10000)
+			end_index = start_index + 10000
+			self.data_source.reset(start_index=start_index, end_index=end_index)
+		else:
+			self.data_source.reset()
 		self.balance = self.initial_balance
 		self.price_history.clear() # This will empty the deque
 		self.trade_history.clear() # This will empty the list
@@ -229,8 +238,8 @@ class TradingEnv(gym.Env):
 		self.last_P_L = 0
 		
 		
-	def reset(self):
-		self.trading_broker.reset()
+	def reset(self, random_start_index=False):
+		self.trading_broker.reset(random_start_index=random_start_index)
 		self.done = False
 		self.last_P_L = 0
 		return self._get_observation()
@@ -247,7 +256,11 @@ class TradingEnv(gym.Env):
 		
 		self.done = self.trading_broker.is_done()
 		obs = self._get_observation()
-		reward = self._calculate_reward()
+		if res is False:
+			# Minor penalty for taking an action that cannot be executed
+			reward = -1
+		else:
+			reward = self._calculate_reward()
 		info = {
 			"action": action,
 			"action_res": res,
