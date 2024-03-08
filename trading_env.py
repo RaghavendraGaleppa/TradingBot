@@ -36,8 +36,11 @@ class DataSource:
 		self.data = self.data[start_index:end_index]
 		self.max_index = len(self.data)
 		
-	def reset(self):
-		self.current_index = 0
+	def reset(self, start_index=0, end_index=None):
+		self.current_index = start_index
+		end_index = len(self.data) if end_index is None else end_index
+		self.data = self.data[start_index:end_index]
+		self.max_index = len(self.data)
 		
 	def get_next_price(self):
 		if self.current_index == self.max_index:
@@ -201,7 +204,6 @@ class TradingEnv(gym.Env):
 			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 1), dtype=float)
 		elif observation_shape == "2d":
 			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 4), dtype=float)
-		self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 2), dtype=float)
 		self.done = False
 		self.last_P_L = 0
 		
