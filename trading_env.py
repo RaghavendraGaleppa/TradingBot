@@ -295,6 +295,6 @@ class TradingEnv(gym.Env):
 		:return: reward: float
 		"""
 		p_l = self.trading_broker.get_current_assets()["portfolio_value"]
-		reward = p_l - self.last_P_L
-		self.last_P_L = p_l
+		reward = (p_l - self.last_P_L) / self.last_P_L
+		self.last_P_L = p_l  
 		return reward
