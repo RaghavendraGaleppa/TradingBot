@@ -87,6 +87,7 @@ class Trainer:
 
 		actions = torch.tensor(actions, dtype=torch.long)
 		actions = actions.view(-1, 1)
+		actions = actions.to(self.device)
 		rewards = torch.tensor(rewards, dtype=torch.float32)
 		rewards = rewards.to(self.device)
 		
