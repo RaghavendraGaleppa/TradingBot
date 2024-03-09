@@ -72,6 +72,10 @@ class TradeBroker:
 		self.initial_balance = initial_balance
 		self.balance = initial_balance
 		self.price_history = deque(maxlen=price_history_length)
+		for i in range(price_history_length):
+			price = self.data_source.get_next_price()[0]
+			price['shares_held'] = 0
+			self.price_history.append(price)
 		self.trade_history = []
 		self.shares_held = 0
 		self.max_shares_held = max_shares_held
@@ -94,6 +98,10 @@ class TradeBroker:
 			self.data_source.reset()
 		self.balance = self.initial_balance
 		self.price_history.clear() # This will empty the deque
+		for i in range(self.price_history.maxlen):
+			price = self.data_source.get_next_price()[0]
+			price['shares_held'] = 0
+			self.price_history.append(price)
 		self.trade_history.clear() # This will empty the list
 		self.shares_held = 0
 		self.balance_history.clear()

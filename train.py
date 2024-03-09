@@ -84,17 +84,18 @@ class Trainer:
 		next_states = next_states.unsqueeze(1)
 
 		actions = torch.tensor(actions, dtype=torch.long)
+		actions = actions.view(-1, 1)
 		rewards = torch.tensor(rewards, dtype=torch.float32)
-		rewards = rewards.unsqueeze(1).to(self.device)
+		rewards = rewards.to(self.device)
 		
 		states = states.to(self.device)
 		q_s_a = self.q_network.forward(states).gather(1, actions) # For each state, get the Q-value of the action taken
 		next_states = next_states.to(self.device)
 		with torch.no_grad():
 			q_s_a_max = self.target_network.forward(next_states).max(1)[0].detach()
-		q_s_a_max = q_s_a_max.unsqueeze(1)
 		target = rewards + self.gamma * q_s_a_max * (1 - dones)
-		
+		target = target.unsqueeze(1)
+
 		loss = F.smooth_l1_loss(q_s_a, target)
 		self.optimizer.zero_grad()
 		loss.backward()
