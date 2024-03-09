@@ -209,7 +209,7 @@ class TradeBroker:
 		# price_data['close_prev'] = price_data['close'].shift(1)
 		# price_data.dropna(inplace=True)
 		# price_data['rate_of_change'] = (price_data['close'] - price_data['close_prev']) / price_data['close_prev']
-		price_data['shares_held'] = price_data['shares_held'] / self.max_shares_held
+		# price_data['shares_held'] = price_data['shares_held'] / self.max_shares_held
 		return price_data
 	
 	def _get_meta_info(self):
@@ -237,13 +237,14 @@ class TradeBroker:
 
 class TradingEnv(gym.Env):
 	
-	def __init__(self, trading_broker, observation_shape="1d"):
+	def __init__(self, trading_broker, observation_shape="1d", features=['close', 'shares_held']):
 		self.trading_broker = trading_broker
 		self.action_space = gym.spaces.Discrete(len(Actions))
+		self.features = features
 		if observation_shape == "1d":
 			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 1), dtype=float)
 		elif observation_shape == "2d":
-			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 5), dtype=float)
+			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, len(features)), dtype=float)
 		self.done = False
 		self.last_P_L = self.trading_broker.initial_balance
 		
@@ -266,11 +267,11 @@ class TradingEnv(gym.Env):
 		
 		self.done = self.trading_broker.is_done()
 		obs = self._get_observation()
-		if res is False:
-			# Minor penalty for taking an action that cannot be executed
-			reward = -0.2
-		else:
-			reward = self._calculate_reward()
+		# if res is False:
+		# 	# Minor penalty for taking an action that cannot be executed
+		# 	reward = -0.2
+		# else:
+		reward = self._calculate_reward()
 		info = {
 			"action": action,
 			"action_res": res,
@@ -282,7 +283,7 @@ class TradingEnv(gym.Env):
 		price_data = self.trading_broker.get_price_history()
 		if len(price_data) == 0:
 			return np.zeros(self.observation_space.shape)
-		obs = price_data[['open', 'high', 'low', 'close', 'shares_held']].to_numpy()
+		obs = price_data[self.features].to_numpy()
 		# obs = obs / obs.max()
 		return obs
 		
