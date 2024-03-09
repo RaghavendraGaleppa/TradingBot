@@ -96,7 +96,7 @@ class Trainer:
 		next_states = next_states.to(self.device)
 		with torch.no_grad():
 			q_s_a_max = self.target_network.forward(next_states).max(1)[0].detach()
-		target = rewards + self.gamma * q_s_a_max * (1 - dones)
+		target = rewards + self.gamma * q_s_a_max 
 		target = target.unsqueeze(1)
 
 		loss = F.smooth_l1_loss(q_s_a, target)
