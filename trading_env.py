@@ -6,6 +6,7 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 from numpy.random import Generator, PCG64
+import talib
 
 logger = get_logger(__name__)
 np.random.seed(0)
@@ -237,7 +238,9 @@ class TradeBroker:
 
 class TradingEnv(gym.Env):
 	
-	def __init__(self, trading_broker, observation_shape="1d", features=['close', 'shares_held']):
+	def __init__(self, trading_broker, observation_shape="1d", features=None):
+		if features is None:
+			features = ["close", "shares_held", "macd", "rsi", "cci", "adx"]
 		self.trading_broker = trading_broker
 		self.action_space = gym.spaces.Discrete(len(Actions))
 		self.features = features
@@ -279,8 +282,23 @@ class TradingEnv(gym.Env):
 		}
 		return obs, reward, self.done, info
 	
+	
+	def generate_features(self, price_data):
+		for feature in self.features:
+			if feature == "macd":
+				price_data[feature] = talib.MACD(price_data["close"])[0]
+			elif feature == "rsi":
+				price_data[feature] = talib.RSI(price_data["close"])
+			elif feature == "cci":
+				price_data[feature] = talib.CCI(price_data["high"], price_data["low"], price_data["close"])
+			elif feature == "adx":
+				price_data[feature] = talib.ADX(price_data["high"], price_data["low"], price_data["close"])
+				
+		return price_data
+	
 	def _get_observation(self):
 		price_data = self.trading_broker.get_price_history()
+		price_data = self.generate_features(price_data)
 		if len(price_data) == 0:
 			return np.zeros(self.observation_space.shape)
 		obs = price_data[self.features].to_numpy()
