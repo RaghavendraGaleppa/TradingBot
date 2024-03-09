@@ -92,8 +92,8 @@ class TradeBroker:
 		
 	def reset(self, random_start_index=False):
 		if random_start_index:
-			start_index = np.random.randint(0, len(self.data_source.original_data) - 10000)
-			end_index = start_index + 10000
+			start_index = np.random.randint(0, len(self.data_source.original_data) - 3000)
+			end_index = start_index + 3000
 			self.data_source.reset(start_index=start_index, end_index=end_index)
 		else:
 			self.data_source.reset()
