@@ -40,9 +40,9 @@ class DataSource:
 		self.max_index = len(self.data)
 		
 	def reset(self, start_index=0, end_index=None):
-		self.current_index = start_index
 		end_index = len(self.original_data) if end_index is None else end_index
 		self.data = self.original_data[start_index:end_index]
+		self.current_index = 0
 		self.max_index = len(self.data)
 		
 	def get_next_price(self):
