@@ -1,22 +1,25 @@
 from model import ReplayBuffer, QNetworkCNN
 import torch
-import torch.nn.F as F
+import torch.nn.functional as F
 import trading_env
 
 
 class Trainer:
 	
-	def __init__(self, env, buffer_size=10000, batch_size=32, gamma=0.99, learning_rate=0.001, target_update=10):
+	def __init__(self, env, buffer_size=10000, batch_size=32, gamma=0.99, learning_rate=0.001, target_update=10, device="cpu"):
 		self.env = env
 		self.buffer = ReplayBuffer(buffer_size)
 		self.batch_size = batch_size
 		self.gamma = gamma
 		self.target_update = target_update
+		self.device = device
 		
 		# Initialize the Q-networks
 		self.q_network = QNetworkCNN(env.observation_space.shape, env.action_space.n)
+		self.q_network.to(device)
 		self.target_network = QNetworkCNN(env.observation_space.shape, env.action_space.n)
 		self.target_network.load_state_dict(self.q_network.state_dict())
+		self.target_network.to(device)
 		self.target_network.eval()
 		self.rewards = []
 		self.losses = []
@@ -82,9 +85,13 @@ class Trainer:
 
 		actions = torch.tensor(actions, dtype=torch.long)
 		rewards = torch.tensor(rewards, dtype=torch.float32)
+		rewards = rewards.unsqueeze(1).to(self.device)
 		
+		states = states.to(self.device)
 		q_s_a = self.q_network.forward(states).gather(1, actions) # For each state, get the Q-value of the action taken
-		q_s_a_max = self.target_network.forward(next_states).max(1)[0].detach()
+		next_states = next_states.to(self.device)
+		with torch.no_grad():
+			q_s_a_max = self.target_network.forward(next_states).max(1)[0].detach()
 		q_s_a_max = q_s_a_max.unsqueeze(1)
 		target = rewards + self.gamma * q_s_a_max * (1 - dones)
 		
