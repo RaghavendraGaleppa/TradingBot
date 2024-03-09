@@ -116,7 +116,7 @@ class Trainer:
 				action = self.select_action(state)
 				next_state, reward, done, info = self.env.step(action.item())
 				episode_reward += reward
-				state = state.detach().numpy()
+				action = action.item()
 				self.buffer.add(state, action, reward, next_state, done)
 				state = next_state
 				self.optimize_model()
