@@ -54,6 +54,8 @@ class Trainer:
 		if len(state.shape) == 3:
 			state = state.unsqueeze(0)
 			
+		state = state.to(self.device)
+			
 		if sample.item() > eps_threshold:
 			with torch.no_grad():
 				"""
