@@ -267,7 +267,7 @@ class TradingEnv(gym.Env):
 		obs = self._get_observation()
 		if res is False:
 			# Minor penalty for taking an action that cannot be executed
-			reward = -1
+			reward = -0.2
 		else:
 			reward = self._calculate_reward()
 		info = {
