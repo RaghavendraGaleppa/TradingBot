@@ -33,6 +33,9 @@ class Trainer:
 		self.eps_end = 0.05
 		self.eps_decay = 200
 		
+		# Trade metrics per episode
+		self.trade_metrics = []
+		
 	def select_action(self, state):
 		"""
 		Basically we use something called an epsilon greedy policy.
@@ -121,8 +124,14 @@ class Trainer:
 				self.buffer.add(state, action, reward, next_state, done)
 				state = next_state
 				self.optimize_model()
+				info['episode'] = episode
+				info['reward'] = reward
+				info['step'] = self.steps_done
+				self.trade_metrics.append(info)
 				
 				# Update the target network
 				if self.steps_done % self.target_update == 0:
 					self.target_network.load_state_dict(self.q_network.state_dict())
-			print(f"Episode: {episode}, Reward: {episode_reward}")
+					
+			total_pl = self.env.trading_broker.balance - self.env.trading_broker.initial_balance
+			print(f"Episode: {episode}, Reward: {episode_reward}, P/L: {total_pl}")

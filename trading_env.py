@@ -33,15 +33,16 @@ class DataSource:
 	
 	def __init__(self, csv_file, reframe=5, start_index=0, end_index=None):
 		self.data = get_data(csv_file, reframe)
+		self.original_data = self.data.copy()
 		end_index = len(self.data) if end_index is None else end_index
 		self.current_index = 0
-		self.data = self.data[start_index:end_index]
+		self.data = self.original_data[start_index:end_index]
 		self.max_index = len(self.data)
 		
 	def reset(self, start_index=0, end_index=None):
 		self.current_index = start_index
-		end_index = len(self.data) if end_index is None else end_index
-		self.data = self.data[start_index:end_index]
+		end_index = len(self.original_data) if end_index is None else end_index
+		self.data = self.original_data[start_index:end_index]
 		self.max_index = len(self.data)
 		
 	def get_next_price(self):
@@ -91,7 +92,7 @@ class TradeBroker:
 		
 	def reset(self, random_start_index=False):
 		if random_start_index:
-			start_index = np.random.randint(0, len(self.data_source) - 10000)
+			start_index = np.random.randint(0, len(self.data_source.original_data) - 10000)
 			end_index = start_index + 10000
 			self.data_source.reset(start_index=start_index, end_index=end_index)
 		else:
