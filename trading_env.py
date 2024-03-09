@@ -288,7 +288,7 @@ class TradingEnv(gym.Env):
 		return obs
 		
 	
-	def _calculate_reward(self):
+	def _calculate_reward(self, multiplier=1e-4):
 		"""
 		Reward should be calculated in terms of how much profit or loss we have made since the last step.
 		It should be positive if current P/L is higher than the last P/L
@@ -298,4 +298,5 @@ class TradingEnv(gym.Env):
 		p_l = self.trading_broker.get_current_assets()["portfolio_value"]
 		reward = (p_l - self.last_P_L) / self.last_P_L
 		self.last_P_L = p_l  
+		reward = p_l * multiplier
 		return reward
