@@ -228,7 +228,8 @@ class TradeBroker:
 			"balance": self.balance,
 			"shares_held": self.shares_held,
 			"current_price": self.price_history[-1]["close"] if self.price_history else None,
-			"P/L": self.balance - self.initial_balance
+			"P/L": self.balance - self.initial_balance,
+			"portfolio_value": self.balance + self.shares_held * self.price_history[-1]["close"] if self.price_history else None,
 		}
 
 
@@ -293,7 +294,7 @@ class TradingEnv(gym.Env):
 		else it should be negative
 		:return: reward: float
 		"""
-		p_l = self.trading_broker.get_current_assets()["P/L"]
+		p_l = self.trading_broker.get_current_assets()["portfolio_value"]
 		reward = p_l - self.last_P_L
 		self.last_P_L = p_l
 		return reward
