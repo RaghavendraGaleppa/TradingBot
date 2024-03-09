@@ -283,7 +283,7 @@ class TradingEnv(gym.Env):
 		if len(price_data) == 0:
 			return np.zeros(self.observation_space.shape)
 		obs = price_data[['open', 'high', 'low', 'close', 'shares_held']].to_numpy()
-		obs = obs / obs.max()
+		# obs = obs / obs.max()
 		return obs
 		
 	
