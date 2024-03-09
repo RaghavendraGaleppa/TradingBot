@@ -245,13 +245,13 @@ class TradingEnv(gym.Env):
 		elif observation_shape == "2d":
 			self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self.trading_broker.price_history.maxlen, 5), dtype=float)
 		self.done = False
-		self.last_P_L = 0
+		self.last_P_L = self.trading_broker.initial_balance
 		
 		
 	def reset(self, random_start_index=False):
 		self.trading_broker.reset(random_start_index=random_start_index)
 		self.done = False
-		self.last_P_L = 0
+		self.last_P_L = self.trading_broker.initial_balance
 		return self._get_observation()
 	
 	def step(self, action):
