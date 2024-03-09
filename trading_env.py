@@ -229,7 +229,7 @@ class TradeBroker:
 			"shares_held": self.shares_held,
 			"current_price": self.price_history[-1]["close"] if self.price_history else None,
 			"P/L": self.balance - self.initial_balance,
-			"portfolio_value": self.balance + self.shares_held * self.price_history[-1]["close"] if self.price_history else None,
+			"portfolio_value": self.balance + self.shares_held * self.price_history[-1]["close"] if self.price_history else self.balance,
 		}
 
 
