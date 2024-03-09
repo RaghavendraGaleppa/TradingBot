@@ -123,15 +123,16 @@ class Trainer:
 				action = action.item()
 				self.buffer.add(state, action, reward, next_state, done)
 				state = next_state
-				self.optimize_model()
+				
 				info['episode'] = episode
 				info['reward'] = reward
 				info['step'] = self.steps_done
 				self.trade_metrics.append(info)
 				
-				# Update the target network
-				if self.steps_done % self.target_update == 0:
-					self.target_network.load_state_dict(self.q_network.state_dict())
+			self.optimize_model()
+			# Update the target network
+			if self.steps_done % self.target_update == 0:
+				self.target_network.load_state_dict(self.q_network.state_dict())
 					
 			total_pl = self.env.trading_broker.balance - self.env.trading_broker.initial_balance
 			print(f"Episode: {episode}, Reward: {episode_reward}, P/L: {total_pl}")
